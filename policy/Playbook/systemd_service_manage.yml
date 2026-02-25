@@ -1,0 +1,23 @@
+﻿---
+- name: Manage systemd service state
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    service_name: ""
+    service_enabled: true
+    service_state: "started"
+
+  tasks:
+    - name: Validate required service_name
+      ansible.builtin.assert:
+        that:
+          - service_name | length > 0
+        fail_msg: "Set extra_vars.service_name"
+
+    - name: Apply service state
+      ansible.builtin.systemd:
+        name: "{{ service_name }}"
+        enabled: "{{ service_enabled }}"
+        state: "{{ service_state }}"
+        daemon_reload: true

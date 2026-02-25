@@ -1,0 +1,8 @@
+﻿---
+- name: Ping all managed hosts
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Check host reachability with ping module
+      ansible.builtin.ping:

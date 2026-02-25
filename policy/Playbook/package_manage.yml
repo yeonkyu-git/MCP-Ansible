@@ -1,0 +1,47 @@
+﻿---
+- name: Manage packages (install/remove/update)
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    package_action: "update_all"   # update_all | install | remove
+    package_names: []               # install/remove 시 패키지명 문자열 또는 리스트 사용
+
+  tasks:
+    - name: Validate package_action
+      ansible.builtin.assert:
+        that:
+          - package_action in ['update_all', 'install', 'remove']
+        fail_msg: "Set extra_vars.package_action to one of: update_all, install, remove"
+
+    - name: Normalize package_names to list
+      ansible.builtin.set_fact:
+        normalized_package_names: >-
+          {{ package_names if (package_names is sequence and package_names is not string) else [package_names] }}
+
+    - name: Validate package_names for install/remove
+      ansible.builtin.assert:
+        that:
+          - normalized_package_names | length > 0
+          - normalized_package_names | reject('equalto', '') | list | length == normalized_package_names | length
+        fail_msg: "Set extra_vars.package_names for install/remove"
+      when: package_action in ['install', 'remove']
+
+    - name: Update all packages to latest (yum/dnf)
+      ansible.builtin.yum:
+        name: "*"
+        state: latest
+        update_cache: true
+      when: package_action == 'update_all'
+
+    - name: Install selected packages
+      ansible.builtin.package:
+        name: "{{ normalized_package_names }}"
+        state: present
+      when: package_action == 'install'
+
+    - name: Remove selected packages
+      ansible.builtin.package:
+        name: "{{ normalized_package_names }}"
+        state: absent
+      when: package_action == 'remove'

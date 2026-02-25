@@ -1,0 +1,18 @@
+﻿---
+- name: Grep pattern in log file
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    log_file: "/var/log/messages"
+    log_pattern: "ERROR"
+
+  tasks:
+    - name: Search pattern in log file
+      ansible.builtin.shell: "grep -n -- '{{ log_pattern }}' '{{ log_file }}' || true"
+      register: grep_result
+      changed_when: false
+
+    - name: Print matched lines
+      ansible.builtin.debug:
+        var: grep_result.stdout_lines

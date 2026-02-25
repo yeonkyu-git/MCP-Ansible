@@ -1,0 +1,18 @@
+﻿---
+- name: Tail log file
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    log_file: "/var/log/messages"
+    tail_lines: 100
+
+  tasks:
+    - name: Show last N lines from log file
+      ansible.builtin.command: "tail -n {{ tail_lines }} {{ log_file }}"
+      register: tail_result
+      changed_when: false
+
+    - name: Print tailed lines
+      ansible.builtin.debug:
+        var: tail_result.stdout_lines

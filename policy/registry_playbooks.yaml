@@ -1,0 +1,147 @@
+﻿playbooks:
+  # 전체 대상 서버의 기본 연결 상태(핑) 점검
+  - id: ping_all
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/ping.yml
+    description: "Basic connectivity check playbook"
+    inputs: []
+
+  # 시스템 정보(facts)만 수집하고 변경은 수행하지 않음
+  - id: gather_facts_only
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/gather_facts_only.yml
+    description: "Collect system facts only"
+    inputs: []
+
+  # 계정 생성/잠금/삭제 등 사용자 계정 운영 작업
+  - id: user_account_manage
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/user_account_manage.yml
+    description: "Create/lock/delete user accounts"
+    inputs:
+      - name: user_name
+        type: string
+        required: true
+        description: "Target account name"
+      - name: user_state
+        type: string
+        required: false
+        default: present
+        enum: [present, absent]
+        description: "Account state (create/delete)"
+      - name: user_shell
+        type: string
+        required: false
+        default: /bin/bash
+        description: "Account login shell"
+
+  # sudoers 정책 조회(audit) 및 권한 부여/회수 관리
+  - id: sudoers_manage
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/sudoers_manage.yml
+    description: "Audit and manage sudo policy (audit/present/absent)"
+    inputs:
+      - name: sudo_action
+        type: string
+        required: false
+        default: audit
+        enum: [audit, present, absent]
+        description: "Select action (audit/grant/revoke)"
+      - name: sudo_user
+        type: string
+        required: false
+        description: "Target account name (required for present/absent)"
+
+  # 패키지 설치/제거/전체 업데이트(yum/dnf 계열) 관리
+  - id: package_manage
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/package_manage.yml
+    description: "Manage packages (install/remove/update_all)"
+    inputs:
+      - name: package_action
+        type: string
+        required: false
+        default: update_all
+        enum: [update_all, install, remove]
+        description: "Select package action"
+      - name: package_names
+        type: array|string
+        required: false
+        description: "Package names for install/remove actions"
+
+  # systemd 서비스 enable/start/restart 등 제어
+  - id: systemd_service_manage
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/systemd_service_manage.yml
+    description: "Manage systemd services"
+    inputs:
+      - name: service_name
+        type: string
+        required: true
+        description: "Target service name (e.g. nginx)"
+      - name: service_enabled
+        type: boolean
+        required: false
+        default: true
+        description: "Enable service on boot"
+      - name: service_state
+        type: string
+        required: false
+        default: started
+        enum: [started, stopped, restarted, reloaded]
+        description: "Desired service state"
+
+  # 로그 디렉터리 파일 목록 조회(ls -al)
+  - id: log_list_files
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/log_list_files.yml
+    description: "List files in a target directory (ls -al)"
+    inputs:
+      - name: target_dir
+        type: string
+        required: false
+        default: /var/log
+        description: "Target directory path to list"
+
+  # 지정 로그 파일의 마지막 N줄 조회(기본: /var/log/messages)
+  - id: log_tail_file
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/log_tail_file.yml
+    description: "Show last N lines of a log file (default: /var/log/messages)"
+    inputs:
+      - name: log_file
+        type: string
+        required: false
+        default: /var/log/messages
+        description: "Target log file path"
+      - name: tail_lines
+        type: integer
+        required: false
+        default: 100
+        description: "Number of last lines to show"
+
+  # 지정 로그 파일에서 패턴 검색(예: ERROR 문자열)
+  - id: log_grep_pattern
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/log_grep_pattern.yml
+    description: "Search pattern in a log file (e.g. ERROR)"
+    inputs:
+      - name: log_file
+        type: string
+        required: false
+        default: /var/log/messages
+        description: "Target log file path for search"
+      - name: log_pattern
+        type: string
+        required: false
+        default: ERROR
+        description: "Search pattern string"
+
+  # 특정 systemd 서비스의 에러 저널 로그 조회
+  - id: journal_service_errors
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/journal_service_errors.yml
+    description: "Show recent error logs for a systemd service"
+    inputs:
+      - name: service_name
+        type: string
+        required: true
+        description: "Target service name for journal query"
+      - name: journal_lines
+        type: integer
+        required: false
+        default: 100
+        description: "Number of recent error lines to show"
+
+
+

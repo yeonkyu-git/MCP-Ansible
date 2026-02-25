@@ -1,0 +1,4 @@
+mcp>=1.26.0
+ansible-runner>=2.4.0
+ansible-core==2.14.18
+PyYAML>=6.0.2

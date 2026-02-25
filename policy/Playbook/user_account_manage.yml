@@ -1,0 +1,22 @@
+﻿---
+- name: Manage user account state
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    user_name: ""
+    user_state: "present"
+    user_shell: "/bin/bash"
+
+  tasks:
+    - name: Validate required user_name
+      ansible.builtin.assert:
+        that:
+          - user_name | length > 0
+        fail_msg: "Set extra_vars.user_name"
+
+    - name: Create/lock/delete user account
+      ansible.builtin.user:
+        name: "{{ user_name }}"
+        state: "{{ user_state }}"
+        shell: "{{ user_shell }}"

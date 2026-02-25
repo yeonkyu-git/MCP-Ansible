@@ -1,0 +1,51 @@
+﻿---
+- name: Gather system facts only
+  hosts: all
+  gather_facts: true
+
+  tasks:
+    - name: Collect users with UID >= 1000
+      ansible.builtin.shell: "getent passwd | awk -F: '$3>=1000 {print $1\":\"$3\":\"$6\":\"$7}'"
+      register: users_uid_1000
+      changed_when: false
+
+    - name: Collect groups with GID >= 1000
+      ansible.builtin.shell: "getent group | awk -F: '$3>=1000 {print $1\":\"$3}'"
+      register: groups_gid_1000
+      changed_when: false
+
+    - name: Show core system facts (CPU/Mem/Network/Uptime)
+      ansible.builtin.debug:
+        msg:
+          - "hostname={{ ansible_hostname | default(inventory_hostname) }}"
+          - "os={{ ansible_distribution | default('unknown') }} {{ ansible_distribution_version | default('') }}"
+          - "kernel={{ ansible_kernel | default('unknown') }}"
+          - "architecture={{ ansible_architecture | default('unknown') }}"
+          - "cpu_vcpus={{ ansible_processor_vcpus | default(0) }}"
+          - "cpu_cores={{ ansible_processor_cores | default(0) }}"
+          - "mem_total_mb={{ ansible_memtotal_mb | default(0) }}"
+          - "swap_total_mb={{ ansible_swaptotal_mb | default(0) }}"
+          - "uptime_seconds={{ ansible_uptime_seconds | default(0) }}"
+          - "loadavg_1m={{ ansible_loadavg['1m'] | default('n/a') }}"
+          - "default_ipv4={{ ansible_default_ipv4.address | default('n/a') }}"
+          - "dns_servers={{ ansible_dns.nameservers | default([]) }}"
+          - "virtualization={{ ansible_virtualization_type | default('n/a') }}"
+
+    - name: Show filesystem usage summary
+      ansible.builtin.debug:
+        msg: >-
+          mount={{ item.mount }}
+          fstype={{ item.fstype | default('n/a') }}
+          size_total={{ item.size_total | default(0) }}
+          size_available={{ item.size_available | default(0) }}
+          used_pct={{ (((item.size_total | int) - (item.size_available | int)) / (item.size_total | int) * 100) | round(2)
+          if (item.size_total | int) > 0 else 0 }}
+      loop: "{{ ansible_mounts | default([]) }}"
+
+    - name: Show users with UID >= 1000
+      ansible.builtin.debug:
+        var: users_uid_1000.stdout_lines
+
+    - name: Show groups with GID >= 1000
+      ansible.builtin.debug:
+        var: groups_gid_1000.stdout_lines

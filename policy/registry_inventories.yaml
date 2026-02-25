@@ -1,0 +1,4 @@
+﻿inventories:
+  - id: linux
+    path: ${ANSIBLE_MCP_INVENTORY_ROOT}/inventory.ini
+    description: Inventory Linux hosts

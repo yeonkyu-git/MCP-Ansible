@@ -1,0 +1,36 @@
+# Python cache / bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local env / secrets
+.env
+.env.*
+!.env.example
+
+# Logs / runtime artifacts
+*.log
+logs/
+runs/
+
+# Project-specific generated artifacts
+wheelhouse/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

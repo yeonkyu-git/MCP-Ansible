@@ -1,0 +1,75 @@
+﻿---
+- name: Manage or audit sudoers policy
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    sudo_action: "audit"   # audit | present | absent
+    sudo_user: ""
+
+  tasks:
+    - name: Validate sudo_action
+      ansible.builtin.assert:
+        that:
+          - sudo_action in ['audit', 'present', 'absent']
+        fail_msg: "Set extra_vars.sudo_action to one of: audit, present, absent"
+
+    - name: Validate required sudo_user for present/absent
+      ansible.builtin.assert:
+        that:
+          - sudo_user | length > 0
+        fail_msg: "Set extra_vars.sudo_user when sudo_action is present/absent"
+      when: sudo_action in ['present', 'absent']
+
+    - name: Collect effective sudo rules (excluding comments)
+      ansible.builtin.shell: |
+        set -o pipefail
+        {
+          awk '!/^\s*($|#)/ {print FILENAME ":" $0}' /etc/sudoers
+          if [ -d /etc/sudoers.d ]; then
+            awk '!/^\s*($|#)/ {print FILENAME ":" $0}' /etc/sudoers.d/* 2>/dev/null || true
+          fi
+        } | sed 's/[[:space:]]\+/ /g'
+      args:
+        executable: /bin/bash
+      register: sudo_rules
+      changed_when: false
+      when: sudo_action == 'audit'
+
+    - name: Collect members of wheel group
+      ansible.builtin.command: "getent group wheel"
+      register: wheel_group
+      changed_when: false
+      failed_when: false
+      when: sudo_action == 'audit'
+
+    - name: Collect members of sudo group
+      ansible.builtin.command: "getent group sudo"
+      register: sudo_group
+      changed_when: false
+      failed_when: false
+      when: sudo_action == 'audit'
+
+    - name: Print sudo audit summary
+      ansible.builtin.debug:
+        msg:
+          - "wheel_group={{ wheel_group.stdout | default('not found') }}"
+          - "sudo_group={{ sudo_group.stdout | default('not found') }}"
+          - "sudo_rules={{ sudo_rules.stdout_lines | default([]) }}"
+      when: sudo_action == 'audit'
+
+    - name: Place sudoers include file
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/{{ sudo_user }}"
+        content: "{{ sudo_user }} ALL=(ALL) NOPASSWD:ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: "visudo -cf %s"
+      when: sudo_action == 'present'
+
+    - name: Remove sudoers include file
+      ansible.builtin.file:
+        path: "/etc/sudoers.d/{{ sudo_user }}"
+        state: absent
+      when: sudo_action == 'absent'

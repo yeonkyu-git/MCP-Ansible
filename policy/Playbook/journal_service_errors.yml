@@ -1,0 +1,24 @@
+﻿---
+- name: Show service errors from journald
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    service_name: ""
+    journal_lines: 100
+
+  tasks:
+    - name: Validate required service_name
+      ansible.builtin.assert:
+        that:
+          - service_name | length > 0
+        fail_msg: "Set extra_vars.service_name"
+
+    - name: Query recent error logs for service
+      ansible.builtin.command: "journalctl -u {{ service_name }} -p err -n {{ journal_lines }} --no-pager"
+      register: journal_result
+      changed_when: false
+
+    - name: Print journal lines
+      ansible.builtin.debug:
+        var: journal_result.stdout_lines

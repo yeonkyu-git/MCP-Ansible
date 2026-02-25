@@ -1,0 +1,17 @@
+﻿---
+- name: List files in log directory
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    target_dir: "/var/log"
+
+  tasks:
+    - name: List files with ls -al
+      ansible.builtin.command: "ls -al {{ target_dir }}"
+      register: ls_result
+      changed_when: false
+
+    - name: Print file list
+      ansible.builtin.debug:
+        var: ls_result.stdout_lines
