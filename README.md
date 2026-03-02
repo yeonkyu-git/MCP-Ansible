@@ -1,4 +1,4 @@
-# mcp_ansible
+﻿# mcp_ansible
 Ansible를 MCP Tool Server(HTTP `streamable-http`)로 제공하는 프로젝트입니다.
 
 ## 1. 한눈에 보기
@@ -50,26 +50,79 @@ pip install -e .
 uv sync
 ```
 
-## 5. 빠른 시작
-1. `.env` 준비
+## 5. 폐쇄망 서버 배포 (권장 절차)
+### 5.1 준비 조건
+- 폐쇄망 서버 Linux 환경 (예: Rocky 9)
+- Python 3.11 사용 가능
+- Ansible 실행 환경 준비
+  - 방법 A: 서버에 `ansible-core`가 이미 설치됨
+  - 방법 B: 오프라인 설치 시 `requirements-offline-with-ansible214.txt` 사용
+
+### 5.2 인터넷 가능한 환경에서 패키지 준비
 ```bash
-cp .env.example .env
+cd mcp_ansible
+bash ./scripts/build_wheelhouse.sh
 ```
 
-2. 값 수정 (`.env`)
-- `ANSIBLE_MCP_PLAYBOOK_ROOT`
-- `ANSIBLE_MCP_INVENTORY_ROOT`
-- `ANSIBLE_MCP_LOG_DIR` 또는 `ANSIBLE_MCP_LOG_FILE`/`ANSIBLE_MCP_AUDIT_LOG_FILE`
-
-3. 서버 실행
+`ansible-core`까지 포함하려면:
 ```bash
-./.venv/bin/python -m mcp_ansible.main
+cd mcp_ansible
+REQUIREMENTS=requirements-offline-with-ansible214.txt bash ./scripts/build_wheelhouse.sh
 ```
 
-커스텀 env 파일 사용:
+### 5.3 폐쇄망 서버로 복사
+아래를 복사합니다.
+- `mcp_ansible/`
+- `wheelhouse/`
+
+### 5.4 폐쇄망 서버에서 오프라인 설치
 ```bash
-ANSIBLE_MCP_ENV_FILE=/etc/ansible-mcp/.env ./.venv/bin/python -m mcp_ansible.main
+cd /engn/mcp/mcp_ansible
+bash ./scripts/install_offline.sh
 ```
+
+`ansible-core` 포함 설치:
+```bash
+cd /engn/mcp/mcp_ansible
+REQUIREMENTS=requirements-offline-with-ansible214.txt bash ./scripts/install_offline.sh
+```
+
+### 5.5 `.env` 설정 (중요)
+`policy/*.yaml`의 경로는 환경변수 치환을 사용하므로, 실제 배치 경로에 맞게 설정합니다.
+
+예시:
+```env
+ANSIBLE_MCP_HOST=0.0.0.0
+ANSIBLE_MCP_PORT=5000
+ANSIBLE_MCP_HTTP_PATH=/mcp
+
+ANSIBLE_MCP_PLAYBOOK_ROOT=/engn/ansible/playbook
+ANSIBLE_MCP_INVENTORY_ROOT=/engn/ansible
+
+ANSIBLE_MCP_RUNS_DIR=/var/lib/ansible-mcp/runs
+ANSIBLE_MCP_LOG_LEVEL=INFO
+ANSIBLE_MCP_LOG_DIR=/var/log/ansible-mcp
+ANSIBLE_MCP_LOG_MAX_BYTES=10485760
+ANSIBLE_MCP_LOG_BACKUP_COUNT=5
+```
+
+커스텀 env 경로를 사용할 경우:
+```bash
+ANSIBLE_MCP_ENV_FILE=/etc/ansible-mcp/.env ./mcp_ansible/.venv/bin/python -m mcp_ansible.main
+```
+
+### 5.6 서버 실행
+```bash
+cd /engn/mcp
+./mcp_ansible/.venv/bin/python -m mcp_ansible.main
+```
+
+### 5.7 동작 확인 순서
+1. `list_registered_playbooks`
+2. `get_playbook_schema`
+3. `list_registered_inventories`
+4. `run_playbook_check`
+5. 필요 시 `run_playbook_apply`
 
 ## 6. MCP 등록 예시
 ```toml
@@ -91,9 +144,8 @@ url = "http://<ANSIBLE_SERVER_IP>:5000/mcp"
 ### 입력
 - 실행은 `playbook_id`, `inventory_id` 기준
 - `extra_vars`는 JSON object
-- `extra_vars`는 playbook `inputs` 스키마 기준으로 런타임 검증(필수값/타입/enum)됩니다.
+- `extra_vars`는 playbook `inputs` 스키마 기준으로 런타임 검증(필수값/타입/enum)
 - 정책 파일의 `path`는 환경변수 치환 지원
-  - 예: `${ANSIBLE_MCP_PLAYBOOK_ROOT}/sudoers_manage.yml`
 
 ### 출력
 - `run_id`
@@ -124,16 +176,3 @@ url = "http://<ANSIBLE_SERVER_IP>:5000/mcp"
 - apply 전 check 결과 반드시 검토
 - log/runs 디렉터리 권한 최소화
 - 비밀정보는 Vault/외부 Secret Manager 사용
-
-## 11. 오프라인 설치
-1. 인터넷 환경에서 wheelhouse 생성
-```bash
-bash ./scripts/build_wheelhouse.sh
-```
-
-2. 폐쇄망 서버로 `mcp_ansible/`, `wheelhouse/` 복사
-
-3. 폐쇄망 서버에서 설치
-```bash
-bash ./scripts/install_offline.sh
-```
