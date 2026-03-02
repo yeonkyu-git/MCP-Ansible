@@ -137,10 +137,23 @@ ANSIBLE_MCP_LOG_BACKUP_COUNT=5
 ANSIBLE_MCP_ENV_FILE=/etc/ansible-mcp/.env ./mcp_ansible/.venv/bin/python -m mcp_ansible.main
 ```
 
-### 5.6 서버 실행
+### 5.6 서버 기동/중지/상태확인
+기동:
 ```bash
-cd /engn/mcp
-./mcp_ansible/.venv/bin/python -m mcp_ansible.main
+cd /engn/mcp/mcp_ansible
+bash ./scripts/start
+```
+
+중지:
+```bash
+cd /engn/mcp/mcp_ansible
+bash ./scripts/stop
+```
+
+상태확인:
+```bash
+cd /engn/mcp/mcp_ansible
+bash ./scripts/status
 ```
 
 ### 5.7 동작 확인 순서
@@ -166,7 +179,21 @@ url = "http://<ANSIBLE_SERVER_IP>:5000/mcp"
 | `run_playbook_check` | check 모드 실행 |
 | `run_playbook_apply` | apply 모드 실행 |
 
-## 8. 입력/출력 규칙
+## 8. 운영자 질의-Playbook 매핑
+| 질문 유형(예시) | 권장 Playbook ID | 실행 시 핵심 입력 예시 |
+|---|---|---|
+| 서버 접속/SSH 연결 확인 | `ping_all` | `target_hosts: web01` |
+| 서버 기본 정보 확인(CPU/Mem/FS/User/Group) | `gather_facts_only` | `target_hosts: all` |
+| 계정 생성/잠금/삭제/그룹 변경 | `user_account_manage` | `account_action: create`, `username: opsuser` |
+| sudo 권한 추가/제거/조회 | `sudoers_manage` | `sudo_action: list` 또는 `sudo_action: present` |
+| 패키지 전체 업데이트/특정 패키지 설치/제거 | `package_manage` | `package_action: install`, `packages: ["nginx"]` |
+| 서비스 시작/중지/재시작/활성화 | `systemd_service_manage` | `service_name: nginx`, `service_action: restart` |
+| 로그 디렉터리 파일 목록 확인 | `log_list_files` | `log_dir: /var/log` |
+| 특정 로그 마지막 N줄 확인 | `log_tail_file` | `log_file: /var/log/messages`, `lines: 100` |
+| 로그에서 ERROR/키워드 검색 | `log_grep_pattern` | `log_file: /var/log/messages`, `pattern: ERROR` |
+| systemd 저널에서 서비스 에러 확인 | `journal_service_errors` | `service_name: nginx`, `since: -1h` |
+
+## 9. 입력/출력 규칙
 ### 입력
 - 실행은 `playbook_id`, `inventory_id` 기준
 - `extra_vars`는 JSON object
@@ -181,7 +208,7 @@ url = "http://<ANSIBLE_SERVER_IP>:5000/mcp"
 - `failures`
 - `artifact_dir`
 
-## 9. 주요 환경변수
+## 10. 주요 환경변수
 | 변수 | 설명 |
 |---|---|
 | `ANSIBLE_MCP_HOST`, `ANSIBLE_MCP_PORT`, `ANSIBLE_MCP_HTTP_PATH` | 서버 바인딩 |
@@ -197,13 +224,13 @@ url = "http://<ANSIBLE_SERVER_IP>:5000/mcp"
 | `ANSIBLE_MCP_LOG_MAX_BYTES` | 로그 로테이션 크기 |
 | `ANSIBLE_MCP_LOG_BACKUP_COUNT` | 로그 백업 개수 |
 
-## 10. 운영 권고
+## 11. 운영 권고
 - `policy/*.yaml`은 관리자만 수정
 - apply 전 check 결과 반드시 검토
 - log/runs 디렉터리 권한 최소화
 - 비밀정보는 Vault/외부 Secret Manager 사용
 
-## 11. 백그라운드 실행 (Linux)
+## 12. 백그라운드 실행 (Linux)
 `nohup` 기반 백그라운드 실행 스크립트를 제공합니다.
 
 ```bash
@@ -226,7 +253,7 @@ bash ./scripts/stop
 bash ./scripts/status
 ```
 
-## 12. 배포 트러블슈팅
+## 13. 배포 트러블슈팅
 ### 12.1 PowerShell 스크립트 실행 차단
 증상:
 - `running scripts is disabled on this system`
