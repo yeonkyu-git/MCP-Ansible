@@ -43,11 +43,20 @@ def load_env_file(*, env_path: str | None = None, override: bool = False) -> boo
     Returns:
         bool: 하나라도 로드되면 True.
     """
-    target = Path(env_path) if env_path else Path.cwd() / ".env"
+    if env_path:
+        targets = [Path(env_path)]
+    else:
+        package_root = Path(__file__).resolve().parent.parent
+        targets = [package_root / ".env", Path.cwd() / ".env"]
 
-    try:
-        from dotenv import load_dotenv  # type: ignore
+    for target in targets:
+        try:
+            from dotenv import load_dotenv  # type: ignore
 
-        return bool(load_dotenv(dotenv_path=target, override=override))
-    except Exception:
-        return _fallback_load_dotenv(target, override)
+            if bool(load_dotenv(dotenv_path=target, override=override)):
+                return True
+        except Exception:
+            if _fallback_load_dotenv(target, override):
+                return True
+
+    return False

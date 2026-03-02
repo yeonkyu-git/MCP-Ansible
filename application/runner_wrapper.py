@@ -23,6 +23,7 @@ from ..domain.schemas import FailureItem, HostSummary, RunResult
 # 기본 artifact 루트. Linux 서버 기준 경로이며 환경변수로 재정의 가능하다.
 DEFAULT_RUNS_ROOT = "/var/lib/ansible-mcp/runs"
 DEFAULT_RUNS_KEEP_COUNT = 5
+DEFAULT_STDOUT_MAX_LINES = 300
 
 
 def _get_runs_keep_count() -> int:
@@ -57,6 +58,40 @@ def _cleanup_old_runs(base_dir: Path, keep_count: int) -> None:
     run_dirs.sort(key=lambda p: p.stat().st_mtime, reverse=True)
     for stale_dir in run_dirs[keep_count:]:
         shutil.rmtree(stale_dir, ignore_errors=True)
+
+
+def _get_stdout_max_lines() -> int:
+    """stdout 반환 라인 수 제한을 반환한다.
+
+    - `ANSIBLE_MCP_STDOUT_MAX_LINES`가 0 이하이면 전체 라인을 반환한다.
+    - 미설정/오류 시 기본값(DEFAULT_STDOUT_MAX_LINES)을 사용한다.
+    """
+    raw = os.getenv("ANSIBLE_MCP_STDOUT_MAX_LINES", str(DEFAULT_STDOUT_MAX_LINES))
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        value = DEFAULT_STDOUT_MAX_LINES
+    return value
+
+
+def _read_stdout_from_run_dir(run_dir: Path, max_lines: int) -> tuple[str, int, bool]:
+    """run artifact에서 stdout을 읽어 반환한다."""
+    stdout_files = sorted(
+        run_dir.glob("artifacts/*/stdout"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    if not stdout_files:
+        return "", 0, False
+
+    lines = stdout_files[0].read_text(encoding="utf-8", errors="replace").splitlines()
+    line_count = len(lines)
+
+    if max_lines <= 0 or line_count <= max_lines:
+        return "\n".join(lines), line_count, False
+
+    tail = lines[-max_lines:]
+    return "\n".join(tail), line_count, True
 
 
 def _collect_host_summary(stats: dict[str, Any]) -> dict[str, HostSummary]:
@@ -160,6 +195,11 @@ def execute_playbook(
     stats = result.stats if isinstance(result.stats, dict) else {}
     host_summary = _collect_host_summary(stats)
 
+    stdout, stdout_line_count, stdout_truncated = _read_stdout_from_run_dir(
+        run_dir=run_dir,
+        max_lines=_get_stdout_max_lines(),
+    )
+
     return RunResult(
         run_id=run_id,
         status=str(result.status),
@@ -167,4 +207,7 @@ def execute_playbook(
         host_summary=host_summary,
         failures=failures,
         artifact_dir=str(run_dir),
+        stdout=stdout,
+        stdout_line_count=stdout_line_count,
+        stdout_truncated=stdout_truncated,
     )

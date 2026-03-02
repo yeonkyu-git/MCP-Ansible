@@ -56,6 +56,9 @@ class RunResult:
         host_summary: 호스트별 집계 결과.
         failures: 실패 이벤트 목록.
         artifact_dir: 해당 run의 artifact 저장 디렉터리.
+        stdout: 실행 stdout 본문(기본: tail N줄).
+        stdout_line_count: 전체 stdout 라인 수.
+        stdout_truncated: stdout가 라인 제한으로 잘렸는지 여부.
     """
 
     run_id: str
@@ -64,6 +67,9 @@ class RunResult:
     host_summary: dict[str, HostSummary] = field(default_factory=dict)
     failures: list[FailureItem] = field(default_factory=list)
     artifact_dir: str = ""
+    stdout: str = ""
+    stdout_line_count: int = 0
+    stdout_truncated: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         """dataclass 구조를 JSON 직렬화 가능한 dict로 변환한다."""
@@ -76,4 +82,7 @@ class RunResult:
             "host_summary": host_summary,
             "failures": failures,
             "artifact_dir": self.artifact_dir,
+            "stdout": self.stdout,
+            "stdout_line_count": self.stdout_line_count,
+            "stdout_truncated": self.stdout_truncated,
         }

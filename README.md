@@ -127,6 +127,7 @@ ANSIBLE_MCP_INVENTORY_ROOT=/engn/ansible
 ANSIBLE_CONFIG=/engn/ansible/ansible.cfg
 
 ANSIBLE_MCP_RUNS_DIR=/var/lib/ansible-mcp/runs
+ANSIBLE_MCP_STDOUT_MAX_LINES=300
 ANSIBLE_MCP_LOG_LEVEL=INFO
 ANSIBLE_MCP_LOG_DIR=/var/log/ansible-mcp
 ANSIBLE_MCP_LOG_MAX_BYTES=10485760
@@ -210,6 +211,9 @@ url = "http://<ANSIBLE_SERVER_IP>:5000/mcp"
 - `host_summary`
 - `failures`
 - `artifact_dir`
+- `stdout` (기본: tail N줄)
+- `stdout_line_count`
+- `stdout_truncated`
 
 ## 10. 주요 환경변수
 | 변수 | 설명 |
@@ -220,6 +224,7 @@ url = "http://<ANSIBLE_SERVER_IP>:5000/mcp"
 | `ANSIBLE_MCP_INVENTORY_ROOT` | inventory 루트 경로 |
 | `ANSIBLE_CONFIG` | ansible.cfg 절대 경로(권장 고정) |
 | `ANSIBLE_MCP_RUNS_DIR` | runs artifact 저장 경로 |
+| `ANSIBLE_MCP_STDOUT_MAX_LINES` | Tool 응답에 포함할 stdout 최대 줄 수(0 이하: 전체) |
 | `ANSIBLE_MCP_RUNS_BACKUP_COUNT` | runs 보관 개수(미설정 시 `LOG_BACKUP_COUNT` 사용) |
 | `ANSIBLE_MCP_LOG_LEVEL` | 로그 레벨 |
 | `ANSIBLE_MCP_LOG_DIR` | 기본 로그 디렉터리(`app.log`, `audit.log`) |
