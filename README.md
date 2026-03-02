@@ -124,6 +124,7 @@ ANSIBLE_MCP_HTTP_PATH=/mcp
 
 ANSIBLE_MCP_PLAYBOOK_ROOT=/engn/ansible/playbook
 ANSIBLE_MCP_INVENTORY_ROOT=/engn/ansible
+ANSIBLE_CONFIG=/engn/ansible/ansible.cfg
 
 ANSIBLE_MCP_RUNS_DIR=/var/lib/ansible-mcp/runs
 ANSIBLE_MCP_LOG_LEVEL=INFO
@@ -160,8 +161,9 @@ bash ./scripts/status
 1. `list_registered_playbooks`
 2. `get_playbook_schema`
 3. `list_registered_inventories`
-4. `run_playbook_check`
-5. 필요 시 `run_playbook_apply`
+4. `list_inventory_hosts` (실제 제어 대상 서버 목록 확인)
+5. `run_playbook_check`
+6. 필요 시 `run_playbook_apply`
 
 ## 6. MCP 등록 예시
 ```toml
@@ -176,6 +178,7 @@ url = "http://<ANSIBLE_SERVER_IP>:5000/mcp"
 | `list_registered_playbooks` | playbook 요약 목록(ID, description) |
 | `get_playbook_schema` | 특정 playbook 상세(`path`, `inputs`) |
 | `list_registered_inventories` | inventory 목록 |
+| `list_inventory_hosts` | inventory 파일 기준 실제 호스트/그룹 목록 |
 | `run_playbook_check` | check 모드 실행 |
 | `run_playbook_apply` | apply 모드 실행 |
 
@@ -215,6 +218,7 @@ url = "http://<ANSIBLE_SERVER_IP>:5000/mcp"
 | `ANSIBLE_MCP_ENV_FILE` | 커스텀 `.env` 경로 |
 | `ANSIBLE_MCP_PLAYBOOK_ROOT` | playbook 루트 경로 |
 | `ANSIBLE_MCP_INVENTORY_ROOT` | inventory 루트 경로 |
+| `ANSIBLE_CONFIG` | ansible.cfg 절대 경로(권장 고정) |
 | `ANSIBLE_MCP_RUNS_DIR` | runs artifact 저장 경로 |
 | `ANSIBLE_MCP_RUNS_BACKUP_COUNT` | runs 보관 개수(미설정 시 `LOG_BACKUP_COUNT` 사용) |
 | `ANSIBLE_MCP_LOG_LEVEL` | 로그 레벨 |

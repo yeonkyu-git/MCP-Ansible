@@ -1,7 +1,7 @@
 ﻿playbooks:
   # 전체 대상 서버의 기본 연결 상태(핑) 점검
   - id: ping_all
-    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/ping.yml
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/ping_all.yml
     description: "Basic connectivity check playbook"
     inputs: []
 
