@@ -207,7 +207,7 @@ url = "http://<ANSIBLE_SERVER_IP>:5000/mcp"
 `nohup` 기반 백그라운드 실행 스크립트를 제공합니다.
 
 ```bash
-bash ./scripts/run_mcp_background.sh
+bash ./scripts/start
 ```
 
 주요 환경변수:
@@ -215,6 +215,16 @@ bash ./scripts/run_mcp_background.sh
 - `PYTHON_BIN` (기본: `$APP_DIR/.venv/bin/python`)
 - `LOG_DIR` (기본: `/var/log/ansible-mcp`)
 - `PID_FILE` (기본: `$APP_DIR/ansible-mcp.pid`)
+
+중지:
+```bash
+bash ./scripts/stop
+```
+
+상태 확인:
+```bash
+bash ./scripts/status
+```
 
 ## 12. 배포 트러블슈팅
 ### 12.1 PowerShell 스크립트 실행 차단

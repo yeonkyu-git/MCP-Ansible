@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run MCP server in background with nohup.
-# Usage:
-#   bash ./scripts/run_mcp_background.sh
-
 APP_DIR="${APP_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
 PYTHON_BIN="${PYTHON_BIN:-$APP_DIR/.venv/bin/python}"
+PACKAGE_NAME="${PACKAGE_NAME:-$(basename "$APP_DIR")}"
+RUN_CWD="${RUN_CWD:-$(dirname "$APP_DIR")}"
 LOG_DIR="${LOG_DIR:-/var/log/ansible-mcp}"
 PID_FILE="${PID_FILE:-$APP_DIR/ansible-mcp.pid}"
 OUT_LOG="${OUT_LOG:-$LOG_DIR/server.out.log}"
@@ -28,13 +26,15 @@ if [[ ! -x "$PYTHON_BIN" ]]; then
   exit 1
 fi
 
-cd "$APP_DIR"
-nohup "$PYTHON_BIN" -m mcp_ansible.main >>"$OUT_LOG" 2>>"$ERR_LOG" &
+cd "$RUN_CWD"
+nohup "$PYTHON_BIN" -m "${PACKAGE_NAME}.main" >>"$OUT_LOG" 2>>"$ERR_LOG" &
 NEW_PID=$!
 echo "$NEW_PID" > "$PID_FILE"
 
 echo "ansible-mcp started"
 echo "pid: $NEW_PID"
 echo "pid file: $PID_FILE"
+echo "run cwd: $RUN_CWD"
+echo "module: ${PACKAGE_NAME}.main"
 echo "out log: $OUT_LOG"
 echo "err log: $ERR_LOG"
