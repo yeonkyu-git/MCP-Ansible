@@ -202,3 +202,76 @@ url = "http://<ANSIBLE_SERVER_IP>:5000/mcp"
 - apply 전 check 결과 반드시 검토
 - log/runs 디렉터리 권한 최소화
 - 비밀정보는 Vault/외부 Secret Manager 사용
+
+## 11. 백그라운드 실행 (Linux)
+`nohup` 기반 백그라운드 실행 스크립트를 제공합니다.
+
+```bash
+bash ./scripts/run_mcp_background.sh
+```
+
+주요 환경변수:
+- `APP_DIR` (기본: 스크립트 기준 프로젝트 루트)
+- `PYTHON_BIN` (기본: `$APP_DIR/.venv/bin/python`)
+- `LOG_DIR` (기본: `/var/log/ansible-mcp`)
+- `PID_FILE` (기본: `$APP_DIR/ansible-mcp.pid`)
+
+## 12. 배포 트러블슈팅
+### 12.1 PowerShell 스크립트 실행 차단
+증상:
+- `running scripts is disabled on this system`
+
+해결:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build_wheelhouse.ps1
+```
+
+### 12.2 Windows에서 Linux wheel 강제 다운로드 시 `pywin32` 오류
+증상:
+- `No matching distribution found for pywin32>=310; sys_platform == "win32"`
+
+원인:
+- Windows 조건부 의존성이 함께 평가되어 Linux 대상 wheel 다운로드와 충돌
+
+해결:
+- Windows 직접 생성 대신 WSL/Linux에서 wheelhouse 생성
+
+### 12.3 WSL에서 `python3.11: command not found`
+증상:
+- `./scripts/build_wheelhouse.sh: line 15: python3.11: command not found`
+
+해결:
+```bash
+PYTHON_EXE=python bash ./scripts/build_wheelhouse.sh
+```
+
+ansible-core 포함:
+```bash
+PYTHON_EXE=python REQUIREMENTS=requirements-offline-with-ansible214.txt bash ./scripts/build_wheelhouse.sh
+```
+
+### 12.4 오프라인 설치 시 `PyYAML>=6.0.2` 미탐지
+증상:
+- `No matching distribution found for PyYAML>=6.0.2`
+
+원인:
+- wheelhouse ABI 불일치 (예: `cp312` wheel을 Python 3.11 서버에 설치)
+
+확인:
+```bash
+ls wheelhouse | grep -i pyyaml
+```
+- 파일명에 `cp311` 포함 필요
+
+해결:
+- `cp311` 기준으로 wheelhouse 재생성 후 재복사
+
+### 12.5 서버 Python 다중 버전 이슈
+예:
+- `python3 --version` -> 3.9.x
+- `python --version` -> 3.11.x
+
+해결:
+```bash
+PYTHON_EXE=python REQUIREMENTS=requirements-offline-with-ansible214.txt bash ./scripts/install_offline.sh
+```
