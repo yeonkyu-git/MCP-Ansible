@@ -59,6 +59,7 @@ uv sync
   - 방법 B: 오프라인 설치 시 `requirements-offline-with-ansible214.txt` 사용
 
 ### 5.2 인터넷 가능한 환경에서 패키지 준비
+Linux/macOS:
 ```bash
 cd mcp_ansible
 bash ./scripts/build_wheelhouse.sh
@@ -70,12 +71,25 @@ cd mcp_ansible
 REQUIREMENTS=requirements-offline-with-ansible214.txt bash ./scripts/build_wheelhouse.sh
 ```
 
+Windows PowerShell:
+```powershell
+cd mcp_ansible
+powershell -ExecutionPolicy Bypass -File .\scripts\build_wheelhouse.ps1
+```
+
+`ansible-core`까지 포함하려면:
+```powershell
+cd mcp_ansible
+powershell -ExecutionPolicy Bypass -File .\scripts\build_wheelhouse.ps1 -Requirements requirements-offline-with-ansible214.txt
+```
+
 ### 5.3 폐쇄망 서버로 복사
 아래를 복사합니다.
 - `mcp_ansible/`
 - `wheelhouse/`
 
 ### 5.4 폐쇄망 서버에서 오프라인 설치
+Linux:
 ```bash
 cd /engn/mcp/mcp_ansible
 bash ./scripts/install_offline.sh
@@ -85,6 +99,18 @@ bash ./scripts/install_offline.sh
 ```bash
 cd /engn/mcp/mcp_ansible
 REQUIREMENTS=requirements-offline-with-ansible214.txt bash ./scripts/install_offline.sh
+```
+
+Windows PowerShell:
+```powershell
+cd D:\MCPTools\mcp_ansible
+powershell -ExecutionPolicy Bypass -File .\scripts\install_offline.ps1
+```
+
+`ansible-core`까지 포함하려면:
+```powershell
+cd D:\MCPTools\mcp_ansible
+powershell -ExecutionPolicy Bypass -File .\scripts\install_offline.ps1 -Requirements requirements-offline-with-ansible214.txt
 ```
 
 ### 5.5 `.env` 설정 (중요)
