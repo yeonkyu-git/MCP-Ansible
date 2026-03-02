@@ -143,19 +143,19 @@ ANSIBLE_MCP_ENV_FILE=/etc/ansible-mcp/.env ./mcp_ansible/.venv/bin/python -m mcp
 기동:
 ```bash
 cd /engn/mcp/mcp_ansible
-bash ./scripts/start
+bash ./scripts/start.sh
 ```
 
 중지:
 ```bash
 cd /engn/mcp/mcp_ansible
-bash ./scripts/stop
+bash ./scripts/stop.sh
 ```
 
 상태확인:
 ```bash
 cd /engn/mcp/mcp_ansible
-bash ./scripts/status
+bash ./scripts/status.sh
 ```
 
 ### 5.7 동작 확인 순서
@@ -243,7 +243,7 @@ url = "http://<ANSIBLE_SERVER_IP>:5000/mcp"
 `nohup` 기반 백그라운드 실행 스크립트를 제공합니다.
 
 ```bash
-bash ./scripts/start
+bash ./scripts/start.sh
 ```
 
 주요 환경변수:
@@ -254,12 +254,12 @@ bash ./scripts/start
 
 중지:
 ```bash
-bash ./scripts/stop
+bash ./scripts/stop.sh
 ```
 
 상태 확인:
 ```bash
-bash ./scripts/status
+bash ./scripts/status.sh
 ```
 
 ## 13. 배포 트러블슈팅
@@ -321,3 +321,17 @@ ls wheelhouse | grep -i pyyaml
 ```bash
 PYTHON_EXE=python REQUIREMENTS=requirements-offline-with-ansible214.txt bash ./scripts/install_offline.sh
 ```
+
+
+
+## 14. Recent Implementation Summary
+- Refactored tool modules into `catalog_tools` and `run_tools` for maintainability.
+- Adopted 2-step catalog flow: summary (`list_registered_playbooks`) then schema detail (`get_playbook_schema`).
+- Added inventory host discovery tool: `list_inventory_hosts(inventory_id)`.
+- Added runtime `extra_vars` validation (required/type/enum/unknown key).
+- Improved logging with structured audit events (JSON line).
+- Extended `.env`-based path/config injection and prioritized project-root `.env` loading.
+- Included stdout in run responses: `stdout`, `stdout_line_count`, `stdout_truncated`.
+- Added `ANSIBLE_MCP_STDOUT_MAX_LINES` to control response stdout volume.
+- Added run artifact retention cleanup (keep-count based).
+- Standardized service scripts as `start.sh`, `stop.sh`, `status.sh`.
