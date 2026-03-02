@@ -6,7 +6,67 @@ from typing import Any
 from mcp.server.fastmcp import FastMCP
 
 from ...application.registry_loader import RegistryError
-from .context import audit_log, logger, mask_sensitive, run_playbook
+from .context import audit_log, logger, mask_sensitive, registry, run_playbook
+
+
+def _is_type_match(value: Any, expected_type: str) -> bool:
+    if expected_type == "string":
+        return isinstance(value, str)
+    if expected_type == "integer":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if expected_type == "number":
+        return (isinstance(value, int) and not isinstance(value, bool)) or isinstance(value, float)
+    if expected_type == "boolean":
+        return isinstance(value, bool)
+    if expected_type == "array":
+        return isinstance(value, list)
+    if expected_type == "object":
+        return isinstance(value, dict)
+    return False
+
+
+def _matches_type_spec(value: Any, type_spec: str) -> bool:
+    expected_types = [item.strip() for item in type_spec.split("|") if item.strip()]
+    return any(_is_type_match(value, expected_type) for expected_type in expected_types)
+
+
+def _validate_extra_vars(playbook_id: str, extra_vars: dict[str, Any] | None) -> None:
+    if extra_vars is None:
+        extra_vars = {}
+
+    metadata = registry.get_playbook(playbook_id)
+    inputs = metadata.get("inputs", [])
+    schema_by_name = {str(item.get("name")): item for item in inputs if isinstance(item, dict)}
+
+    unknown_keys = sorted(set(extra_vars.keys()) - set(schema_by_name.keys()))
+    if unknown_keys:
+        raise ValueError(
+            f"unsupported extra_vars for playbook '{playbook_id}': {', '.join(unknown_keys)}"
+        )
+
+    missing_required: list[str] = []
+    for name, schema in schema_by_name.items():
+        if bool(schema.get("required")) and name not in extra_vars:
+            missing_required.append(name)
+    if missing_required:
+        raise ValueError(
+            f"missing required extra_vars for playbook '{playbook_id}': {', '.join(sorted(missing_required))}"
+        )
+
+    for name, value in extra_vars.items():
+        schema = schema_by_name.get(name, {})
+        type_spec = str(schema.get("type", "")).strip()
+        if type_spec and not _matches_type_spec(value, type_spec):
+            raise ValueError(
+                f"invalid type for extra_var '{name}' in playbook '{playbook_id}': expected {type_spec}"
+            )
+
+        enum_values = schema.get("enum")
+        if isinstance(enum_values, list) and value not in enum_values:
+            allowed = ", ".join(str(item) for item in enum_values)
+            raise ValueError(
+                f"invalid value for extra_var '{name}' in playbook '{playbook_id}': allowed [{allowed}]"
+            )
 
 
 def register_run_tools(mcp: FastMCP) -> None:
@@ -43,6 +103,7 @@ def register_run_tools(mcp: FastMCP) -> None:
             },
         )
         try:
+            _validate_extra_vars(playbook_id=playbook_id, extra_vars=extra_vars)
             result = run_playbook(
                 playbook_id=playbook_id,
                 inventory_id=inventory_id,
@@ -111,6 +172,7 @@ def register_run_tools(mcp: FastMCP) -> None:
             },
         )
         try:
+            _validate_extra_vars(playbook_id=playbook_id, extra_vars=extra_vars)
             result = run_playbook(
                 playbook_id=playbook_id,
                 inventory_id=inventory_id,

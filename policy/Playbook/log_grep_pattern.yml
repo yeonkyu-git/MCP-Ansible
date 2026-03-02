@@ -9,9 +9,16 @@
 
   tasks:
     - name: Search pattern in log file
-      ansible.builtin.shell: "grep -n -- '{{ log_pattern }}' '{{ log_file }}' || true"
+      ansible.builtin.command:
+        argv:
+          - grep
+          - -n
+          - --
+          - "{{ log_pattern }}"
+          - "{{ log_file }}"
       register: grep_result
       changed_when: false
+      failed_when: false
 
     - name: Print matched lines
       ansible.builtin.debug:

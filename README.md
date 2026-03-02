@@ -91,6 +91,7 @@ url = "http://<ANSIBLE_SERVER_IP>:5000/mcp"
 ### 입력
 - 실행은 `playbook_id`, `inventory_id` 기준
 - `extra_vars`는 JSON object
+- `extra_vars`는 playbook `inputs` 스키마 기준으로 런타임 검증(필수값/타입/enum)됩니다.
 - 정책 파일의 `path`는 환경변수 치환 지원
   - 예: `${ANSIBLE_MCP_PLAYBOOK_ROOT}/sudoers_manage.yml`
 
