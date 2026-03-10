@@ -1,5 +1,5 @@
 ﻿---
-- name: List files in log directory
+- name: List files in target directory
   hosts: all
   gather_facts: false
   become: true
@@ -15,3 +15,4 @@
     - name: Print file list
       ansible.builtin.debug:
         var: ls_result.stdout_lines
+

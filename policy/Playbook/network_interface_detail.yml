@@ -1,0 +1,30 @@
+﻿---
+- name: Show network interface status and counters
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    interface_name: ""
+
+  tasks:
+    - name: Query IP address summary
+      ansible.builtin.shell: >-
+        if [ -n {{ interface_name | quote }} ]; then ip addr show {{ interface_name | quote }}; else ip -brief addr; fi
+      register: addr_result
+      changed_when: false
+      failed_when: false
+
+    - name: Query interface counters
+      ansible.builtin.shell: >-
+        if [ -n {{ interface_name | quote }} ]; then ip -s link show {{ interface_name | quote }}; else ip -s link; fi
+      register: link_result
+      changed_when: false
+      failed_when: false
+
+    - name: Print network interface details
+      ansible.builtin.debug:
+        msg:
+          - "[ip addr]"
+          - "{{ addr_result.stdout }}"
+          - "[ip -s link]"
+          - "{{ link_result.stdout }}"

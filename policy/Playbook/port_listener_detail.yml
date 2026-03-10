@@ -1,0 +1,26 @@
+﻿---
+- name: Show listener details for a target port
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    target_port: 0
+
+  tasks:
+    - name: Validate target_port
+      ansible.builtin.assert:
+        that:
+          - target_port | int > 0
+          - target_port | int < 65536
+        fail_msg: "Set extra_vars.target_port between 1 and 65535"
+
+    - name: Query listener details for target port
+      ansible.builtin.shell: >-
+        ss -tulpn | awk 'NR==1 || $5 ~ /:{{ target_port | int }}$/'
+      register: port_result
+      changed_when: false
+      failed_when: false
+
+    - name: Print listener details
+      ansible.builtin.debug:
+        var: port_result.stdout_lines

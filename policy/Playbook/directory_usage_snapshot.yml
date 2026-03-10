@@ -1,0 +1,36 @@
+﻿---
+- name: Show directory usage snapshot
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    target_dir: "/var"
+    max_depth: 2
+    top_n: 20
+
+  tasks:
+    - name: Validate target_dir
+      ansible.builtin.assert:
+        that:
+          - target_dir | length > 0
+        fail_msg: "Set extra_vars.target_dir"
+
+    - name: Validate max_depth and top_n
+      ansible.builtin.assert:
+        that:
+          - max_depth | int >= 0
+          - top_n | int > 0
+        fail_msg: "Set extra_vars.max_depth >= 0 and extra_vars.top_n > 0"
+
+    - name: Query directory usage snapshot
+      ansible.builtin.shell: >-
+        du -x -h --max-depth={{ max_depth | int }} {{ target_dir | quote }} 2>/dev/null |
+        sort -hr |
+        head -n {{ top_n | int }}
+      register: usage_result
+      changed_when: false
+      failed_when: false
+
+    - name: Print usage lines
+      ansible.builtin.debug:
+        var: usage_result.stdout_lines

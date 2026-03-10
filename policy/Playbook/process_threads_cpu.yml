@@ -1,0 +1,28 @@
+﻿---
+- name: Show per-thread CPU usage for a target process
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    pid: 0
+    top_n: 20
+
+  tasks:
+    - name: Validate pid and top_n
+      ansible.builtin.assert:
+        that:
+          - pid | int > 0
+          - top_n | int > 0
+        fail_msg: "Set extra_vars.pid > 0 and extra_vars.top_n > 0"
+
+    - name: Query per-thread CPU usage
+      ansible.builtin.shell: >-
+        ps -L -p {{ pid | int }} -o pid,tid,psr,pcpu,stat,comm --sort=-pcpu |
+        head -n {{ (top_n | int) + 1 }}
+      register: thread_result
+      changed_when: false
+      failed_when: false
+
+    - name: Print thread rows
+      ansible.builtin.debug:
+        var: thread_result.stdout_lines

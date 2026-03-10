@@ -1,0 +1,34 @@
+﻿---
+- name: Show recent system error logs
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    since: "-30m"
+    journal_lines: 100
+
+  tasks:
+    - name: Validate journal_lines
+      ansible.builtin.assert:
+        that:
+          - journal_lines | int > 0
+        fail_msg: "Set extra_vars.journal_lines to a positive integer"
+
+    - name: Query recent error logs from journald
+      ansible.builtin.command:
+        argv:
+          - journalctl
+          - -p
+          - err
+          - -S
+          - "{{ since }}"
+          - -n
+          - "{{ journal_lines | string }}"
+          - --no-pager
+      register: journal_result
+      changed_when: false
+      failed_when: false
+
+    - name: Print journal lines
+      ansible.builtin.debug:
+        var: journal_result.stdout_lines

@@ -1,0 +1,25 @@
+﻿---
+- name: Show top CPU-consuming processes
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    top_n: 20
+
+  tasks:
+    - name: Validate top_n
+      ansible.builtin.assert:
+        that:
+          - top_n | int > 0
+        fail_msg: "Set extra_vars.top_n to a positive integer"
+
+    - name: Query top CPU-consuming processes
+      ansible.builtin.shell: >-
+        ps -eo pid,ppid,user,stat,ni,comm,%cpu,%mem,args --sort=-%cpu |
+        head -n {{ (top_n | int) + 1 }}
+      register: process_result
+      changed_when: false
+
+    - name: Print process list
+      ansible.builtin.debug:
+        var: process_result.stdout_lines

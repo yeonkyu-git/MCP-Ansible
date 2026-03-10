@@ -1,0 +1,31 @@
+﻿---
+- name: Show disk I/O statistics with iostat
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    sample_interval: 1
+    sample_count: 3
+
+  tasks:
+    - name: Validate sampling inputs
+      ansible.builtin.assert:
+        that:
+          - sample_interval | int > 0
+          - sample_count | int > 0
+        fail_msg: "Set extra_vars.sample_interval > 0 and extra_vars.sample_count > 0"
+
+    - name: Query disk I/O snapshot
+      ansible.builtin.command:
+        argv:
+          - iostat
+          - -xz
+          - "{{ sample_interval | string }}"
+          - "{{ sample_count | string }}"
+      register: iostat_result
+      changed_when: false
+      failed_when: false
+
+    - name: Print disk I/O statistics
+      ansible.builtin.debug:
+        var: iostat_result.stdout_lines

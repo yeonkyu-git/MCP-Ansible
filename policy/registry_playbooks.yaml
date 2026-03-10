@@ -85,9 +85,9 @@
         enum: [started, stopped, restarted, reloaded]
         description: "Desired service state"
 
-  # 로그 디렉터리 파일 목록 조회(ls -al)
-  - id: log_list_files
-    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/log_list_files.yml
+  # 지정 디렉터리의 파일 목록 조회(ls -al)
+  - id: file_list_files
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/file_list_files.yml
     description: "List files in a target directory (ls -al)"
     inputs:
       - name: target_dir
@@ -96,33 +96,33 @@
         default: /var/log
         description: "Target directory path to list"
 
-  # 지정 로그 파일의 마지막 N줄 조회(기본: /var/log/messages)
-  - id: log_tail_file
-    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/log_tail_file.yml
-    description: "Show last N lines of a log file (default: /var/log/messages)"
+  # 지정 파일의 마지막 N줄 조회(기본: /var/log/messages)
+  - id: file_tail_file
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/file_tail_file.yml
+    description: "Show last N lines of a target file (default: /var/log/messages)"
     inputs:
-      - name: log_file
+      - name: target_file
         type: string
         required: false
         default: /var/log/messages
-        description: "Target log file path"
+        description: "Target file path"
       - name: tail_lines
         type: integer
         required: false
         default: 100
         description: "Number of last lines to show"
 
-  # 지정 로그 파일에서 패턴 검색(예: ERROR 문자열)
-  - id: log_grep_pattern
-    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/log_grep_pattern.yml
-    description: "Search pattern in a log file (e.g. ERROR)"
+  # 지정 파일에서 패턴 검색(예: ERROR 문자열)
+  - id: file_grep_pattern
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/file_grep_pattern.yml
+    description: "Search pattern in a target file (e.g. ERROR)"
     inputs:
-      - name: log_file
+      - name: target_file
         type: string
         required: false
         default: /var/log/messages
-        description: "Target log file path for search"
-      - name: log_pattern
+        description: "Target file path for search"
+      - name: search_pattern
         type: string
         required: false
         default: ERROR
@@ -142,6 +142,188 @@
         required: false
         default: 100
         description: "Number of recent error lines to show"
+  # 상위 CPU 사용 프로세스 목록 조회
+  - id: process_top_cpu
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/process_top_cpu.yml
+    description: "Show top CPU-consuming processes"
+    inputs:
+      - name: top_n
+        type: integer
+        required: false
+        default: 20
+        description: "Number of processes to display"
 
+  # 상위 메모리 사용 프로세스 목록 조회
+  - id: process_top_memory
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/process_top_memory.yml
+    description: "Show top memory-consuming processes"
+    inputs:
+      - name: top_n
+        type: integer
+        required: false
+        default: 20
+        description: "Number of processes to display"
+
+  # systemd 서비스 상세 상태 조회
+  - id: service_status_detail
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/service_status_detail.yml
+    description: "Show detailed systemd service status"
+    inputs:
+      - name: service_name
+        type: string
+        required: true
+        description: "Target service name"
+      - name: journal_lines
+        type: integer
+        required: false
+        default: 50
+        description: "Number of recent journal lines to include"
+
+  # 최근 시스템 에러 저널 로그 조회
+  - id: journal_recent_errors
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/journal_recent_errors.yml
+    description: "Show recent system error logs from journald"
+    inputs:
+      - name: since
+        type: string
+        required: false
+        default: -30m
+        description: "journalctl --since value"
+      - name: journal_lines
+        type: integer
+        required: false
+        default: 100
+        description: "Maximum number of error lines to show"
+
+  # 최근 커널 메시지 조회
+  - id: kernel_recent_messages
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/kernel_recent_messages.yml
+    description: "Show recent kernel messages"
+    inputs:
+      - name: message_lines
+        type: integer
+        required: false
+        default: 100
+        description: "Number of recent kernel message lines to show"
+
+  # 특정 디렉터리의 상위 사용량 항목 조회
+  - id: directory_usage_snapshot
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/directory_usage_snapshot.yml
+    description: "Show top disk usage entries under a target directory"
+    inputs:
+      - name: target_dir
+        type: string
+        required: false
+        default: /var
+        description: "Target directory path"
+      - name: max_depth
+        type: integer
+        required: false
+        default: 2
+        description: "Maximum directory depth for du"
+      - name: top_n
+        type: integer
+        required: false
+        default: 20
+        description: "Number of entries to display"
+  # 특정 PID의 thread별 CPU 사용량 조회
+  - id: process_threads_cpu
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/process_threads_cpu.yml
+    description: "Show per-thread CPU usage for a target process"
+    inputs:
+      - name: pid
+        type: integer
+        required: true
+        description: "Target process ID"
+      - name: top_n
+        type: integer
+        required: false
+        default: 20
+        description: "Number of thread rows to display"
+
+  # 특정 PID의 실행 상세 정보 조회
+  - id: process_runtime_detail
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/process_runtime_detail.yml
+    description: "Show runtime details for a target process"
+    inputs:
+      - name: pid
+        type: integer
+        required: true
+        description: "Target process ID"
+
+  # 현재 TCP/UDP 연결 상태 스냅샷 조회
+  - id: socket_connection_snapshot
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/socket_connection_snapshot.yml
+    description: "Show active socket connections and listeners"
+    inputs:
+      - name: top_n
+        type: integer
+        required: false
+        default: 100
+        description: "Number of socket rows to display"
+
+  # 디스크 I/O 상태 스냅샷 조회
+  - id: disk_io_snapshot
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/disk_io_snapshot.yml
+    description: "Show disk I/O statistics with iostat"
+    inputs:
+      - name: sample_interval
+        type: integer
+        required: false
+        default: 1
+        description: "Seconds between samples"
+      - name: sample_count
+        type: integer
+        required: false
+        default: 3
+        description: "Number of samples to collect"
+
+  # 최근 변경 파일 목록 조회
+  - id: file_recent_changes
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/file_recent_changes.yml
+    description: "Show recently changed files under a target directory"
+    inputs:
+      - name: target_dir
+        type: string
+        required: false
+        default: /var/log
+        description: "Target directory path"
+      - name: top_n
+        type: integer
+        required: false
+        default: 20
+        description: "Number of files to display"
+
+  # 특정 포트 리스너 상세 조회
+  - id: port_listener_detail
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/port_listener_detail.yml
+    description: "Show listener details for a target port"
+    inputs:
+      - name: target_port
+        type: integer
+        required: true
+        description: "Target TCP or UDP port"
+
+  # 원격 IP별 상위 연결 수 조회
+  - id: connection_top_remote_ips
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/connection_top_remote_ips.yml
+    description: "Show top remote IPs by connection count"
+    inputs:
+      - name: top_n
+        type: integer
+        required: false
+        default: 20
+        description: "Number of remote IPs to display"
+
+  # 네트워크 인터페이스 상세 상태 조회
+  - id: network_interface_detail
+    path: ${ANSIBLE_MCP_PLAYBOOK_ROOT}/network_interface_detail.yml
+    description: "Show network interface status and counters"
+    inputs:
+      - name: interface_name
+        type: string
+        required: false
+        default: ""
+        description: "Optional interface name filter"
 
 

@@ -1,0 +1,69 @@
+﻿---
+- name: Show runtime details for a target process
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    pid: 0
+
+  tasks:
+    - name: Validate pid
+      ansible.builtin.assert:
+        that:
+          - pid | int > 0
+        fail_msg: "Set extra_vars.pid > 0"
+
+    - name: Read process status
+      ansible.builtin.command:
+        argv:
+          - cat
+          - "/proc/{{ pid | int }}/status"
+      register: status_result
+      changed_when: false
+      failed_when: false
+
+    - name: Read process command line
+      ansible.builtin.shell: "tr '\0' ' ' < /proc/{{ pid | int }}/cmdline"
+      register: cmdline_result
+      changed_when: false
+      failed_when: false
+
+    - name: Read process limits
+      ansible.builtin.command:
+        argv:
+          - cat
+          - "/proc/{{ pid | int }}/limits"
+      register: limits_result
+      changed_when: false
+      failed_when: false
+
+    - name: Resolve executable path
+      ansible.builtin.command:
+        argv:
+          - readlink
+          - -f
+          - "/proc/{{ pid | int }}/exe"
+      register: exe_result
+      changed_when: false
+      failed_when: false
+
+    - name: Resolve working directory
+      ansible.builtin.command:
+        argv:
+          - readlink
+          - -f
+          - "/proc/{{ pid | int }}/cwd"
+      register: cwd_result
+      changed_when: false
+      failed_when: false
+
+    - name: Print runtime details
+      ansible.builtin.debug:
+        msg:
+          - "[cmdline] {{ cmdline_result.stdout }}"
+          - "[exe] {{ exe_result.stdout }}"
+          - "[cwd] {{ cwd_result.stdout }}"
+          - "[status]"
+          - "{{ status_result.stdout }}"
+          - "[limits]"
+          - "{{ limits_result.stdout }}"

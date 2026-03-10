@@ -1,0 +1,29 @@
+﻿---
+- name: Show top remote IPs by connection count
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    top_n: 20
+
+  tasks:
+    - name: Validate top_n
+      ansible.builtin.assert:
+        that:
+          - top_n | int > 0
+        fail_msg: "Set extra_vars.top_n > 0"
+
+    - name: Query top remote IPs
+      ansible.builtin.shell: >-
+        ss -tan | awk 'NR>1 {split($5, a, ":"); if (a[1] != "") print a[1]}' |
+        sort |
+        uniq -c |
+        sort -nr |
+        head -n {{ top_n | int }}
+      register: remote_ip_result
+      changed_when: false
+      failed_when: false
+
+    - name: Print remote IP summary
+      ansible.builtin.debug:
+        var: remote_ip_result.stdout_lines

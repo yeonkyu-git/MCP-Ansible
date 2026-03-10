@@ -1,0 +1,36 @@
+﻿---
+- name: Show active socket connections and listeners
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    top_n: 100
+
+  tasks:
+    - name: Validate top_n
+      ansible.builtin.assert:
+        that:
+          - top_n | int > 0
+        fail_msg: "Set extra_vars.top_n > 0"
+
+    - name: Query TCP sockets
+      ansible.builtin.shell: >-
+        ss -tanp | head -n {{ (top_n | int) + 1 }}
+      register: tcp_result
+      changed_when: false
+      failed_when: false
+
+    - name: Query listening sockets
+      ansible.builtin.shell: >-
+        ss -tulpn | head -n {{ (top_n | int) + 1 }}
+      register: listener_result
+      changed_when: false
+      failed_when: false
+
+    - name: Print socket snapshot
+      ansible.builtin.debug:
+        msg:
+          - "[ss -tanp]"
+          - "{{ tcp_result.stdout }}"
+          - "[ss -tulpn]"
+          - "{{ listener_result.stdout }}"

@@ -1,0 +1,25 @@
+﻿---
+- name: Show recent kernel messages
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    message_lines: 100
+
+  tasks:
+    - name: Validate message_lines
+      ansible.builtin.assert:
+        that:
+          - message_lines | int > 0
+        fail_msg: "Set extra_vars.message_lines to a positive integer"
+
+    - name: Query recent kernel messages
+      ansible.builtin.shell: >-
+        dmesg -T | tail -n {{ message_lines | int }}
+      register: dmesg_result
+      changed_when: false
+      failed_when: false
+
+    - name: Print kernel messages
+      ansible.builtin.debug:
+        var: dmesg_result.stdout_lines

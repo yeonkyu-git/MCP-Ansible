@@ -1,21 +1,21 @@
 ﻿---
-- name: Grep pattern in log file
+- name: Grep pattern in target file
   hosts: all
   gather_facts: false
   become: true
   vars:
-    log_file: "/var/log/messages"
-    log_pattern: "ERROR"
+    target_file: "/var/log/messages"
+    search_pattern: "ERROR"
 
   tasks:
-    - name: Search pattern in log file
+    - name: Search pattern in target file
       ansible.builtin.command:
         argv:
           - grep
           - -n
           - --
-          - "{{ log_pattern }}"
-          - "{{ log_file }}"
+          - "{{ search_pattern }}"
+          - "{{ target_file }}"
       register: grep_result
       changed_when: false
       failed_when: false
@@ -23,3 +23,5 @@
     - name: Print matched lines
       ansible.builtin.debug:
         var: grep_result.stdout_lines
+
+

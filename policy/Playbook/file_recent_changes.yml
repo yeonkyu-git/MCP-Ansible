@@ -1,0 +1,29 @@
+﻿---
+- name: Show recently changed files under a target directory
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    target_dir: "/var/log"
+    top_n: 20
+
+  tasks:
+    - name: Validate target_dir and top_n
+      ansible.builtin.assert:
+        that:
+          - target_dir | length > 0
+          - top_n | int > 0
+        fail_msg: "Set extra_vars.target_dir and extra_vars.top_n > 0"
+
+    - name: Query recently changed files
+      ansible.builtin.shell: >-
+        find {{ target_dir | quote }} -xdev -type f -printf '%TY-%Tm-%Td %TH:%TM:%TS %s %p\n' 2>/dev/null |
+        sort -r |
+        head -n {{ top_n | int }}
+      register: file_result
+      changed_when: false
+      failed_when: false
+
+    - name: Print recent file list
+      ansible.builtin.debug:
+        var: file_result.stdout_lines

@@ -1,0 +1,47 @@
+﻿---
+- name: Show detailed service status
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    service_name: ""
+    journal_lines: 50
+
+  tasks:
+    - name: Validate required service_name
+      ansible.builtin.assert:
+        that:
+          - service_name | length > 0
+        fail_msg: "Set extra_vars.service_name"
+
+    - name: Query systemctl status output
+      ansible.builtin.command:
+        argv:
+          - systemctl
+          - status
+          - "{{ service_name }}"
+          - --no-pager
+      register: service_status_result
+      changed_when: false
+      failed_when: false
+
+    - name: Query recent service journal logs
+      ansible.builtin.command:
+        argv:
+          - journalctl
+          - -u
+          - "{{ service_name }}"
+          - -n
+          - "{{ journal_lines | string }}"
+          - --no-pager
+      register: service_journal_result
+      changed_when: false
+      failed_when: false
+
+    - name: Print service status summary
+      ansible.builtin.debug:
+        msg:
+          - "[systemctl status]"
+          - "{{ service_status_result.stdout }}"
+          - "[journalctl]"
+          - "{{ service_journal_result.stdout }}"
